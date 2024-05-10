@@ -1,0 +1,32 @@
+# docker-compose.yml
+version: '3'
+
+services:
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: 'orders'
+      MYSQL_PASSWORD: 'root'
+      MYSQL_ROOT_PASSWORD: 'root'
+    networks:
+      - mynetwork
+
+  web:
+    build: .
+    command: sh -c "dockerize -wait tcp://db:3306 -timeout 20s && python manage.py makemigrations && python manage.py migrate && python manage.py createsuperuser --noinput && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DJANGO_SUPERUSER_USERNAME: 'admin'
+      DJANGO_SUPERUSER_PASSWORD: 'admin'
+      DJANGO_SUPERUSER_EMAIL: 'admin@admin.com'
+    volumes:
+      - .:/code
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
